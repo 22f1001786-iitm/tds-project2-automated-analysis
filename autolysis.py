@@ -36,11 +36,19 @@ def query_llm(prompt):
 # Data analysis functions
 def analyze_data(file_path):
     """Perform a basic analysis on the dataset."""
-    df = pd.read_csv(file_path)
+    # Try to read the CSV with different encodings
+    encodings = ["utf-8", "latin1", "iso-8859-1"]
+    for encoding in encodings:
+        try:
+            df = pd.read_csv(file_path, encoding=encoding)
+            break
+        except UnicodeDecodeError as e:
+            if encoding == encodings[-1]:  # If all encodings fail
+                raise ValueError(f"Could not decode file {file_path} with any supported encodings.") from e
+    
     description = df.describe(include='all').transpose()
     missing_values = df.isnull().sum()
-    correlation_matrix = df.corr(numeric_only=True)
-    return df, description, missing_values, correlation_matrix
+    return df, description, missing_values, df.corr(numeric_only=True)
 
 # Visualization
 def visualize_correlation(correlation_matrix, output_path):
